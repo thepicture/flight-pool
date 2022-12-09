@@ -1,0 +1,5 @@
+.article {
+  box-shadow: var(--box-shadow);
+  margin: 4em;
+  padding: var(--padding);
+}

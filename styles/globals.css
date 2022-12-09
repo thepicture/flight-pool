@@ -1,3 +1,12 @@
+:root {
+  --box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+  --primary-button-box-shadow: rgba(149, 157, 165, 1) 0px 2px 12px;
+  --padding: 1em;
+  --primary-button-color: white;
+  --primary-button-background: #0066ff;
+  --primary-button-hover-background: #4d94ff;
+}
+
 html,
 body {
   padding: 0;
@@ -23,4 +32,47 @@ a {
     color: white;
     background: black;
   }
+}
+
+input[type="submit"],
+input[type="button"],
+.test-0-abm {
+  color: var(--primary-button-color);
+  background: var(--primary-button-background);
+  border: none;
+  padding: 0.5em;
+  border-radius: 0.5em;
+  cursor: pointer;
+}
+
+input[type="submit"]:hover,
+input[type="button"]:hover,
+.test-0-abm:hover {
+  background: var(--primary-button-hover-background);
+  transition: all 100ms;
+}
+
+input[type="text"],
+input[type="date"] {
+  border: 1px solid;
+  border-radius: 0.2em;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+
+  padding: var(--padding);
+  box-shadow: var(--box-shadow);
+}
+
+form label {
+  display: grid;
+  gap: 1em;
+  padding-bottom: var(--padding);
+  grid-template-columns: 1fr 1fr;
+}
+
+form label {
+  text-align: right;
 }

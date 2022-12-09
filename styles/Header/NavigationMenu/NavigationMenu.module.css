@@ -1,0 +1,19 @@
+.list {
+  display: flex;
+  justify-content: space-around;
+  list-style-type: none;
+}
+
+.list a:hover {
+  color: blue;
+  transition: all 100ms ease-in-out;
+}
+
+@media screen and (max-width: 640px) {
+  .list {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-left: 0px;
+  }
+}

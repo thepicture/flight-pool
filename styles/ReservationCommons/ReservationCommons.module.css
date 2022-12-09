@@ -1,0 +1,7 @@
+.form {
+  transition: all 1s ease-in-out;
+}
+
+.form * {
+  transition: all 1s ease-in-out;
+}

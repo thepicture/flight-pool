@@ -1,0 +1,15 @@
+.footer {
+  padding: var(--padding);
+
+  background: black;
+  color: white;
+}
+
+.footer ul {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.footer li {
+  list-style-type: none;
+}
