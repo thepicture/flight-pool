@@ -3,7 +3,7 @@ import React from "react";
 const SearchForm = () => {
   return (
     <>
-      <form action="post">
+      <form method="post" action="/flights">
         <h2>Search Form</h2>
         <label>
           From

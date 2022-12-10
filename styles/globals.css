@@ -36,7 +36,8 @@ a {
 
 input[type="submit"],
 input[type="button"],
-.test-0-abm {
+.test-0-abm,
+.test-0-bsb {
   color: var(--primary-button-color);
   background: var(--primary-button-background);
   border: none;
@@ -47,7 +48,8 @@ input[type="button"],
 
 input[type="submit"]:hover,
 input[type="button"]:hover,
-.test-0-abm:hover {
+.test-0-abm:hover,
+.test-0-bsb {
   background: var(--primary-button-hover-background);
   transition: all 100ms;
 }

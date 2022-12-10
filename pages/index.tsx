@@ -1,4 +1,5 @@
 import Head from "next/head";
+
 import ClosedDiscountsForm from "../components/ClosedDiscountsForm/ClosedDiscountsForm";
 import CompanyTrust from "../components/CompanyTrust/CompanyTrust";
 import DiscountList from "../components/DiscountList/DiscountList";
@@ -7,7 +8,7 @@ import Header from "../components/Header/Header";
 import ReservationCommons from "../components/ReservationCommons/ReservationCommons";
 import SearchForm from "../components/SearchForm/SearchForm";
 
-export default function Home() {
+const Home = () => {
   return (
     <div>
       <Head>
@@ -26,4 +27,6 @@ export default function Home() {
       <Footer />
     </div>
   );
-}
+};
+
+export default Home;
