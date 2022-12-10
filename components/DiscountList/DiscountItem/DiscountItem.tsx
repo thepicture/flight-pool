@@ -22,6 +22,7 @@ const DiscountItem: React.FC<DiscountItemProps> = ({
         alt={headLine}
         width={200}
         height={200}
+        style={{ width: "100%", objectFit: "cover" }}
         className="test-0-ai"
       />
       <h2 className="test-0-an">{headLine}</h2>

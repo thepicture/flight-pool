@@ -30,7 +30,7 @@ const ReservationCommons = () => {
       return;
     }
 
-    setReservationCount(event.target.value);
+    setReservationCount(+event.target.value);
 
     setIsShowExampleButtonVisible(true);
   };
