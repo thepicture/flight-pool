@@ -9,7 +9,7 @@ const MAX_SUBSCRIPTIONS_FROM_THE_SAME_USER_AGENT = 3;
 const SUBSCRIPTIONS_INTERVAL_MILLISECONDS = 1000 * 10;
 
 const MAX_MALICIOUS_USER_AGENTS = 3;
-const MALICIOUS_USER_AGENTS_INTERVAL_MILLISECONS = 1000 * 60 * 10;
+const MALICIOUS_USER_AGENTS_INTERVAL_MILLISECONDS = 1000 * 60 * 10;
 
 const NO_JSON_REPLACER = null;
 const JSON_SPACES = 2;
@@ -42,6 +42,7 @@ export default function handler(
 
     return endSuccessfully(res);
   }
+
   fs.writeFileSync(
     `generated/closed-discounts/${+new Date()}`,
     JSON.stringify(subscription, NO_JSON_REPLACER, JSON_SPACES),
@@ -68,7 +69,7 @@ function areTooManyMessagesFromTheSameUserAgent(req: NextApiRequest): boolean {
   return (
     timestamps.filter((timestamp) => {
       const today = +new Date();
-      const then = timestamp;
+      const then = +timestamp;
 
       const content = fs.readFileSync(
         `generated/closed-discounts/${timestamp}`,
@@ -78,11 +79,12 @@ function areTooManyMessagesFromTheSameUserAgent(req: NextApiRequest): boolean {
       const userAgent = subscription.headers["user-agent"];
       return (
         req.headers["user-agent"] === userAgent &&
-        today - +then < SUBSCRIPTIONS_INTERVAL_MILLISECONDS
+        today - then < SUBSCRIPTIONS_INTERVAL_MILLISECONDS
       );
     }).length > MAX_SUBSCRIPTIONS_FROM_THE_SAME_USER_AGENT
   );
 }
+
 function isUserAgentMalicious(thisHeaders: IncomingHttpHeaders): boolean {
   const timestamps = fs
     .readdirSync("spamfilter/user-agents-log", "utf-8")
@@ -111,7 +113,7 @@ function isUserAgentMalicious(thisHeaders: IncomingHttpHeaders): boolean {
 
       return (
         (areUserAgentsSame || areHeaderOrdersSame) &&
-        today - +then < MALICIOUS_USER_AGENTS_INTERVAL_MILLISECONS
+        today - +then < MALICIOUS_USER_AGENTS_INTERVAL_MILLISECONDS
       );
     }).length > MAX_MALICIOUS_USER_AGENTS
   );
