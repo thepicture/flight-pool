@@ -37,7 +37,8 @@ a {
 input[type="submit"],
 input[type="button"],
 .test-0-abm,
-.test-0-bsb {
+.test-0-bsb,
+.test-5-remove {
   color: var(--primary-button-color);
   background: var(--primary-button-background);
   border: none;

@@ -1,0 +1,7 @@
+.container {
+  padding: var(--padding);
+}
+
+.container input {
+  display: block;
+}
