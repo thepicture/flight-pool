@@ -4,8 +4,7 @@ import Footer from "../../components/Footer/Footer";
 import Header from "../../components/Header/Header";
 import PassengerList from "../../components/PassengerList/PassengerList";
 import ReservationFlightList from "../../components/ReservationFlightList/ReservationFlightList";
-
-import styles from "styles/ReservationPage/ReservationPage.module.css";
+import { ReservationFooter } from "../../components/ReservationFooter/ReservationFooter";
 
 const ReservationPage = () => {
   return (
@@ -18,13 +17,8 @@ const ReservationPage = () => {
       <Header />
       <main>
         <ReservationFlightList />
-        <PassengerList />
-        <section className={styles.container}>
-          <p className="test-5-price">
-            Final price: <strong>{20000} RUB</strong>
-          </p>
-          <input type="button" value="Book!" className="test-5-book" />
-        </section>
+        <PassengerList canAddPassenger canExclude />
+        <ReservationFooter />
       </main>
       <Footer />
     </div>

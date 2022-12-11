@@ -7,6 +7,8 @@ interface PassengerProps {
   lastName: string;
   dateOfBirth: Date;
   documentNumber: number;
+
+  canExclude?: boolean;
 }
 
 const Passenger: React.FC<PassengerProps> = ({
@@ -14,6 +16,8 @@ const Passenger: React.FC<PassengerProps> = ({
   lastName,
   dateOfBirth,
   documentNumber,
+
+  canExclude,
 }) => {
   return (
     <section className={styles.article}>
@@ -21,9 +25,11 @@ const Passenger: React.FC<PassengerProps> = ({
       <p className="test-5-last">Last Name: {lastName}</p>
       <p className="test-5-dob">Date of Birth: {dateOfBirth.toDateString()}</p>
       <p className="test-5-doc">Document Number: {documentNumber}</p>
-      <a href="#" className="test-5-remove">
-        Exclude Passenger from Flight
-      </a>
+      {canExclude && (
+        <a href="#" className="test-5-remove">
+          Exclude Passenger from Flight
+        </a>
+      )}
     </section>
   );
 };
