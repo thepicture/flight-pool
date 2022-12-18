@@ -1,10 +1,9 @@
 import Head from "next/head";
+import { FlightList } from "../../../components/FlightList/FlightList";
 
 import Footer from "../../../components/Footer/Footer";
 import Header from "../../../components/Header/Header";
 import PassengerList from "../../../components/PassengerList/PassengerList";
-import ReservationFlightList from "../../../components/ReservationFlightList/ReservationFlightList";
-import { ReservationFooter } from "../../../components/ReservationFooter/ReservationFooter";
 import { ReservationManagementFooter } from "../../../components/ReservationManagementFooter/ReservationManagementFooter";
 import ReservationManagementHeader from "../../../components/ReservationManagementHeader/ReservationManagementHeader";
 
@@ -22,7 +21,7 @@ const ReservationManagementPage = () => {
           reservationCode={100}
           priceInRubles={10000}
         />
-        <ReservationFlightList />
+        <FlightList reservationManagementMode />
         <PassengerList />
         <ReservationManagementFooter />
       </main>

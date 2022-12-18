@@ -3,7 +3,7 @@ import Head from "next/head";
 import Footer from "../../components/Footer/Footer";
 import Header from "../../components/Header/Header";
 import PassengerList from "../../components/PassengerList/PassengerList";
-import ReservationFlightList from "../../components/ReservationFlightList/ReservationFlightList";
+import { FlightList } from "../../components/FlightList/FlightList";
 import { ReservationFooter } from "../../components/ReservationFooter/ReservationFooter";
 
 const ReservationPage = () => {
@@ -16,7 +16,7 @@ const ReservationPage = () => {
       </Head>
       <Header />
       <main>
-        <ReservationFlightList />
+        <FlightList reservationMode />
         <PassengerList canAddPassenger canExclude />
         <ReservationFooter />
       </main>
