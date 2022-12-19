@@ -1,0 +1,15 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@media screen and (max-width: 640px) {
+  .container {
+    display: block;
+  }
+
+  .container form {
+    box-shadow: none;
+  }
+}

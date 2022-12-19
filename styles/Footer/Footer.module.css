@@ -5,6 +5,12 @@
   color: white;
 }
 
+.footer .sticky {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+
 .footer ul {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -12,4 +18,10 @@
 
 .footer li {
   list-style-type: none;
+}
+
+.sticky {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
 }
