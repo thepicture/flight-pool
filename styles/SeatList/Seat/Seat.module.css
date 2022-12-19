@@ -1,0 +1,57 @@
+.chosen,
+.unchosen {
+  border: 1px solid gray;
+
+  text-align: center;
+  align-items: center;
+  padding: 2em 2em;
+
+  cursor: pointer;
+
+  background: white;
+  border-radius: 0.5em;
+
+  animation: to 100ms;
+}
+
+.unchosen:hover {
+  background: skyblue;
+  transition: all 1s;
+
+  animation: from 100ms;
+}
+
+@keyframes from {
+  from {
+    background: white;
+  }
+  to {
+    background: skyblue;
+  }
+}
+
+@keyframes to {
+  from {
+    background: skyblue;
+  }
+  to {
+    background: white;
+  }
+}
+
+.chosen {
+  position: relative;
+
+  background: skyblue;
+}
+
+.chosen::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  content: "Chosen";
+  font-weight: bold;
+  font-size: 0.8em;
+  padding: 0.3em;
+}

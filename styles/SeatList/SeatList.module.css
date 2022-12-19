@@ -1,0 +1,10 @@
+.heading {
+  padding-left: 0.6em;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1em;
+  padding: 1em;
+}
