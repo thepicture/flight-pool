@@ -1,14 +1,89 @@
-import React from "react";
+import React, { useState } from "react";
 
 import styles from "styles/AuthForm/AuthForm.module.css";
+import { ErrorsContainer, ValidationErrors } from "../../features/validator";
 
 interface AuthFormProps {
   registerMode?: boolean;
 }
 
+export interface User {
+  firstName: string;
+  lastName: string;
+  phone: string;
+  documentNumber: string;
+  password: string;
+  passwordAgain?: string;
+}
+
 export const AuthForm: React.FC<AuthFormProps> = ({ registerMode = false }) => {
+  const [fields, setFields] = useState<User>({
+    firstName: "",
+    lastName: "",
+    phone: "",
+    documentNumber: "",
+    password: "",
+    passwordAgain: "",
+  });
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (fields.password !== fields.passwordAgain) {
+      return alert("Passwords do not match");
+    }
+
+    const body = Object.assign({}, fields);
+    delete body.passwordAgain;
+
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (response.status === 204) {
+        alert("Registration successful!");
+      } else if (response.status === 422) {
+        const { error } = await response.json();
+        console.log(error);
+        if (error.message === ValidationErrors.VALIDATION_ERROR) {
+          const properties = Object.getOwnPropertyNames(error.errors);
+          let builder = "";
+
+          for (const property of properties) {
+            const errorArray = error.errors[property];
+
+            if (errorArray.length === 0) {
+              continue;
+            }
+
+            builder += `${property}: ${errorArray.join(", ")}\n`;
+          }
+
+          alert(builder);
+        } else {
+          alert("Unknown error occured!");
+        }
+      }
+    } catch (error) {
+      alert("Cannot register, server seems to be turned off");
+      console.log(error);
+    }
+  };
+
+  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFields((fields) => ({
+      ...fields,
+      [event.target.name]: event.target.value,
+    }));
+  };
+
   return (
-    <form method="post" action="/flights" className={styles.container}>
+    <form onSubmit={handleSubmit} className={styles.container}>
       <h2>{registerMode ? "Registration" : "Auth"}</h2>
       {registerMode && (
         <>
@@ -16,30 +91,38 @@ export const AuthForm: React.FC<AuthFormProps> = ({ registerMode = false }) => {
             First Name
             <input
               type="text"
+              name="firstName"
               placeholder="John"
               minLength={2}
               maxLength={64}
               required
+              onChange={handleChange}
+              autoComplete="given-name"
             />
           </label>
           <label>
             Last Name
             <input
               type="text"
+              name="lastName"
               placeholder="Doe"
               minLength={2}
               maxLength={64}
               required
+              onChange={handleChange}
+              autoComplete="family-name"
             />
           </label>
           <label>
             Document Number
             <input
               type="text"
+              name="documentNumber"
               placeholder="XXXX XXXXX"
               minLength={4}
               maxLength={16}
               required
+              onChange={handleChange}
             />
           </label>
         </>
@@ -48,19 +131,38 @@ export const AuthForm: React.FC<AuthFormProps> = ({ registerMode = false }) => {
         Phone Number
         <input
           type="tel"
+          name="phone"
           pattern="\+[0-9] \([0-9]{3}\) [0-9]{3} [0-9]{2}-[0-9]{2}"
           placeholder="+ X (XXX) XXX XX-XX"
           required
+          onChange={handleChange}
+          autoComplete="tel"
         />
       </label>
       <label>
         Password
-        <input type="password" minLength={8} maxLength={64} required />
+        <input
+          type="password"
+          name="password"
+          minLength={8}
+          maxLength={64}
+          required
+          onChange={handleChange}
+          autoComplete="new-password"
+        />
       </label>
       {registerMode && (
         <label>
           Password Again
-          <input type="password" minLength={8} maxLength={64} required />
+          <input
+            type="password"
+            name="passwordAgain"
+            minLength={8}
+            maxLength={64}
+            required
+            onChange={handleChange}
+            autoComplete="new-password"
+          />
         </label>
       )}
       <input
