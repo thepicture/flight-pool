@@ -1,0 +1,6 @@
+.container > section {
+  padding: var(--padding);
+  box-shadow: var(--box-shadow);
+
+  margin: 4em;
+}
