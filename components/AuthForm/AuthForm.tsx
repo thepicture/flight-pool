@@ -8,14 +8,15 @@ interface AuthFormProps {
 }
 
 export interface User {
-  firstName: string;
-  lastName: string;
+  firstName?: string;
+  lastName?: string;
   phone: string;
-  documentNumber: string;
+  documentNumber?: string;
   password: string;
   passwordAgain?: string;
 }
 
+const DIGITS_FROM_PHONE_REGEXP = /[^0-9]/g;
 export const AuthForm: React.FC<AuthFormProps> = ({ registerMode = false }) => {
   const [fields, setFields] = useState<User>({
     firstName: "",
@@ -29,15 +30,22 @@ export const AuthForm: React.FC<AuthFormProps> = ({ registerMode = false }) => {
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
-    if (fields.password !== fields.passwordAgain) {
+    if (registerMode && fields.password !== fields.passwordAgain) {
       return alert("Passwords do not match");
     }
 
     const body = Object.assign({}, fields);
     delete body.passwordAgain;
+    body.phone = body.phone.replaceAll(DIGITS_FROM_PHONE_REGEXP, "");
+    if (!registerMode) {
+      delete body.documentNumber;
+      delete body.firstName;
+      delete body.lastName;
+    }
 
     try {
-      const response = await fetch("/api/register", {
+      const path = registerMode ? "/api/register" : "/api/login";
+      const response = await fetch(path, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -68,6 +76,10 @@ export const AuthForm: React.FC<AuthFormProps> = ({ registerMode = false }) => {
         } else {
           alert("Unknown error occured!");
         }
+      } else if (response.status === 200) {
+        alert("Authentication successful!");
+      } else if (response.status === 401) {
+        alert("Incorrect phone or password, retype and try again");
       }
     } catch (error) {
       alert("Cannot register, server seems to be turned off");

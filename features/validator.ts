@@ -28,7 +28,9 @@ export const Validator = {
 
 export const ValidationErrors = {
   VALIDATION_ERROR: "Validation error",
+  UNAUTHORIZED: "Unauthorized",
   cannotBeBlank: (field: string) => `field ${field} can not be blank`,
   nDigitsAndCanStartWithZero: (field: string, digits: number) =>
     `field ${field} should be ${digits} digits long and can start with leading zero`,
+  credentialsIncorrect: "phone or password incorrect",
 };
