@@ -14,9 +14,13 @@
     "@types/react-dom": "18.0.9",
     "eslint": "8.29.0",
     "eslint-config-next": "13.0.6",
+    "mysql": "^2.18.1",
     "next": "13.0.6",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "typescript": "4.9.4"
+  },
+  "devDependencies": {
+    "@types/mysql": "^2.15.21"
   }
 }
