@@ -33,4 +33,8 @@ export const ValidationErrors = {
   nDigitsAndCanStartWithZero: (field: string, digits: number) =>
     `field ${field} should be ${digits} digits long and can start with leading zero`,
   credentialsIncorrect: "phone or password incorrect",
+  incorrectDateFormatYYYYMMDD: (field: string) =>
+    `field ${field} should be in format YYYY-MM-DD`,
+  shouldBePositiveInteger: (field: string) =>
+    `field ${field} should be positive integer`,
 };
