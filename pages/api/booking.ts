@@ -8,8 +8,19 @@ import {
   Validator,
 } from "../../features/validator";
 
+const BIRTH_DATE_REGEXP_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
+const DOCUMENT_REGEXP_FORMAT = /^\d{10}$/;
+
 connection.connect();
 
+const generateRandomCodeOfLength = (length: number): string =>
+  new Array(length)
+    .fill(null)
+    .map(() =>
+      String.fromCharCode(Math.floor(Math.random() * (122 - 97 + 1) + 97))
+    )
+    .join("")
+    .toUpperCase();
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<string>
@@ -40,11 +51,11 @@ export default async function handler(
     const { flight_from, flight_back, passengers } = req.body;
 
     if (!flight_from) {
-      errors.from.push(ValidationErrors.cannotBeBlank("from"));
+      errors.flight_from.push(ValidationErrors.cannotBeBlank("flight_from"));
     }
 
     if (!flight_back) {
-      errors.to.push(ValidationErrors.cannotBeBlank("flight_back"));
+      errors.flight_back.push(ValidationErrors.cannotBeBlank("flight_back"));
     }
 
     if (!passengers) {
@@ -63,7 +74,7 @@ export default async function handler(
           (passenger: { first_name: string }) => !passenger.first_name
         )
       ) {
-        ValidationErrors.cannotBeBlank("first_name");
+        errors.passengers.push(ValidationErrors.cannotBeBlank("first_name"));
       }
 
       if (
@@ -71,7 +82,7 @@ export default async function handler(
           (passenger: { last_name: string }) => !passenger.last_name
         )
       ) {
-        ValidationErrors.cannotBeBlank("last_name");
+        errors.passengers.push(ValidationErrors.cannotBeBlank("last_name"));
       }
 
       if (
@@ -79,14 +90,11 @@ export default async function handler(
           (passenger: { birth_date: string }) => !passenger.birth_date
         )
       ) {
-        ValidationErrors.cannotBeBlank("birth_date");
-      } else if (
-        passengers.some(
-          (passenger: { birth_date: string }) =>
-            !/\d{4}-\d{2}-\d{2}/.test(passenger.birth_date)
-        )
-      ) {
-        ValidationErrors.shouldBeOfDateFormat("birth_date");
+        errors.passengers.push(ValidationErrors.cannotBeBlank("birth_date"));
+      } else if (areSomeBirthDatesIncorrect(passengers)) {
+        errors.passengers.push(
+          ValidationErrors.shouldBeOfDateFormat("birth_date")
+        );
       }
 
       if (
@@ -94,14 +102,13 @@ export default async function handler(
           (passenger: { document_number: string }) => !passenger.document_number
         )
       ) {
-        ValidationErrors.cannotBeBlank("document_number");
-      } else if (
-        passengers.some(
-          (passenger: { document_number: string }) =>
-            !/\d{10}/.test(passenger.document_number)
-        )
-      ) {
-        ValidationErrors.shouldBeOfDocumentFormat("document_number");
+        errors.passengers.push(
+          ValidationErrors.cannotBeBlank("document_number")
+        );
+      } else if (areSomeDocumentsFormatIncorect(passengers)) {
+        errors.passengers.push(
+          ValidationErrors.shouldBeOfDocumentFormat("document_number")
+        );
       }
     }
 
@@ -119,15 +126,7 @@ export default async function handler(
       return res.status(201).end(
         JSON.stringify({
           data: {
-            code: new Array(5)
-              .fill(null)
-              .map(() =>
-                String.fromCharCode(
-                  Math.floor(Math.random() * (122 - 97 + 1) + 97)
-                )
-              )
-              .join("")
-              .toUpperCase(),
+            code: generateRandomCodeOfLength(5),
           },
         })
       );
@@ -137,59 +136,16 @@ export default async function handler(
     return res.status(500).end();
   }
 }
-function buildFlightsQuery(
-  departureDate: string | string[] | undefined,
-  passengerCount: number
-) {
-  return `    SELECT f.id as flight_id, 
-                    flight_code, 
-                    JSON_OBJECT(
-                      'city', a_departure.city,
-                      'airport', a_departure.name,
-                      'iata', a_departure.iata,
-                      'date', '${departureDate}',
-                      'time', DATE_FORMAT(f.time_from, '%h:%i')
-                    ) as 'from',
-                    JSON_OBJECT(
-                      'city', a_arrival.city,
-                      'airport', a_arrival.name,
-                      'iata', a_arrival.iata,
-                      'date', '${departureDate}',
-                      'time', DATE_FORMAT(f.time_to, '%h:%i')
-                    ) as 'to',
-                    f.cost,
-                    (
-                      (SELECT COUNT(*) 
-                         FROM bookings 
-                        WHERE flight_from = f.id
-                      ) - (
-                          SELECT COUNT(*) 
-                            FROM bookings 
-                           WHERE flight_from = f.id
-                             AND (SELECT COUNT(*) FROM passengers WHERE booking_id = id) > ${passengerCount}
-                             AND DATE_FORMAT(date_from, '%y-%M-%d') = '${departureDate}'
-                          )
-                    ) as availability
-               FROM flights f
-         INNER JOIN airports a_departure
-                 ON f.from_id = a_departure.id
-         INNER JOIN airports a_arrival
-                 ON f.to_id = a_arrival.id
-         INNER JOIN bookings b
-                 ON b.flight_from = f.id
-         INNER JOIN passengers p
-                 ON p.booking_id = b.id
-              WHERE (
-                (SELECT COUNT(*) 
-                   FROM bookings 
-                  WHERE flight_from = f.id
-                ) - (
-                    SELECT COUNT(*) 
-                      FROM bookings 
-                     WHERE flight_from = f.id
-                       AND (SELECT COUNT(*) FROM passengers WHERE booking_id = id) > 0
-                       AND DATE_FORMAT(date_from, '%y-%M-%d') = '${departureDate}'
-                    )
-              ) >= ${passengerCount}
-              LIMIT 64`;
+function areSomeBirthDatesIncorrect(passengers: any) {
+  return passengers.some(
+    (passenger: { birth_date: string }) =>
+      !BIRTH_DATE_REGEXP_FORMAT.test(passenger.birth_date)
+  );
+}
+
+function areSomeDocumentsFormatIncorect(passengers: any) {
+  return passengers.some(
+    (passenger: { document_number: string }) =>
+      !DOCUMENT_REGEXP_FORMAT.test(passenger.document_number)
+  );
 }
