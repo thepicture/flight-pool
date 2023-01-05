@@ -62,35 +62,43 @@ export default async function handler(
 
     const flightsTo = await new Promise((resolve, reject) => {
       connection.query(
-        `SELECT id AS flight_id, flight_code, from_id, to_id, cost 
-           FROM flights
-          LIMIT 64`,
+        buildFlightsQuery(departureDate, Number(passengers)),
         [from, passengers],
         function (error, results) {
           if (error) {
-            reject(error);
+            return reject(error);
           }
+
+          results.forEach((result: { from: string; to: string }) => {
+            result.from = JSON.parse(result.from);
+            result.to = JSON.parse(result.to);
+          });
 
           resolve(results);
         }
       );
     });
 
-    const flightsBack = await new Promise((resolve, reject) => {
-      connection.query(
-        `SELECT id AS flight_id, flight_code, from_id, to_id, cost 
-           FROM flights
-          LIMIT 64`,
-        [to, passengers],
-        function (error, results) {
-          if (error) {
-            reject(error);
-          }
+    const flightsBack = arrivalDate
+      ? await new Promise((resolve, reject) => {
+          connection.query(
+            buildFlightsQuery(departureDate, Number(passengers)),
+            [to, passengers],
+            function (error, results) {
+              if (error) {
+                reject(error);
+              }
 
-          resolve(results);
-        }
-      );
-    });
+              results.forEach((result: { from: string; to: string }) => {
+                result.from = JSON.parse(result.from);
+                result.to = JSON.parse(result.to);
+              });
+
+              resolve(results);
+            }
+          );
+        })
+      : [];
 
     res.setHeader("Content-Type", "application/json");
 
@@ -108,8 +116,8 @@ export default async function handler(
       return res.status(200).end(
         JSON.stringify({
           data: {
-            flightsTo,
-            flightsBack,
+            flights_to: flightsTo,
+            flights_back: flightsBack,
           },
         })
       );
@@ -118,4 +126,60 @@ export default async function handler(
     console.error(error);
     return res.status(500).end();
   }
+}
+function buildFlightsQuery(
+  departureDate: string | string[] | undefined,
+  passengerCount: number
+) {
+  return `    SELECT f.id as flight_id, 
+                    flight_code, 
+                    JSON_OBJECT(
+                      'city', a_departure.city,
+                      'airport', a_departure.name,
+                      'iata', a_departure.iata,
+                      'date', '${departureDate}',
+                      'time', DATE_FORMAT(f.time_from, '%h:%i')
+                    ) as 'from',
+                    JSON_OBJECT(
+                      'city', a_arrival.city,
+                      'airport', a_arrival.name,
+                      'iata', a_arrival.iata,
+                      'date', '${departureDate}',
+                      'time', DATE_FORMAT(f.time_to, '%h:%i')
+                    ) as 'to',
+                    f.cost,
+                    (
+                      (SELECT COUNT(*) 
+                         FROM bookings 
+                        WHERE flight_from = f.id
+                      ) - (
+                          SELECT COUNT(*) 
+                            FROM bookings 
+                           WHERE flight_from = f.id
+                             AND (SELECT COUNT(*) FROM passengers WHERE booking_id = id) > ${passengerCount}
+                             AND DATE_FORMAT(date_from, '%y-%M-%d') = '${departureDate}'
+                          )
+                    ) as availability
+               FROM flights f
+         INNER JOIN airports a_departure
+                 ON f.from_id = a_departure.id
+         INNER JOIN airports a_arrival
+                 ON f.to_id = a_arrival.id
+         INNER JOIN bookings b
+                 ON b.flight_from = f.id
+         INNER JOIN passengers p
+                 ON p.booking_id = b.id
+              WHERE (
+                (SELECT COUNT(*) 
+                   FROM bookings 
+                  WHERE flight_from = f.id
+                ) - (
+                    SELECT COUNT(*) 
+                      FROM bookings 
+                     WHERE flight_from = f.id
+                       AND (SELECT COUNT(*) FROM passengers WHERE booking_id = id) > 0
+                       AND DATE_FORMAT(date_from, '%y-%M-%d') = '${departureDate}'
+                    )
+              ) >= ${passengerCount}
+              LIMIT 64`;
 }
