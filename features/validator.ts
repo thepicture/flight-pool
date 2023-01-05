@@ -37,4 +37,9 @@ export const ValidationErrors = {
     `field ${field} should be in format YYYY-MM-DD`,
   shouldBePositiveInteger: (field: string) =>
     `field ${field} should be positive integer`,
+  shouldBeOfDateFormat: (field: string) =>
+    `field ${field} should be of format YYYY-MM-DD`,
+  shouldBeOfDocumentFormat: (field: string) =>
+    `field ${field} should be 10 digits long`,
+  cannotBeEmptyArray: (field: string) => `field ${field} cannot be empty array`,
 };
