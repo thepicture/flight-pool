@@ -42,4 +42,8 @@ export const ValidationErrors = {
   shouldBeOfDocumentFormat: (field: string) =>
     `field ${field} should be 10 digits long`,
   cannotBeEmptyArray: (field: string) => `field ${field} cannot be empty array`,
+  flightDoesNotExist: (field: string) =>
+    `field ${field} contains a value that does not exist in database`,
+  flightIsNotAvailable: (field: string) =>
+    `field ${field} contains a flight that is not available for the given date`,
 };
