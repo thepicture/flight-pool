@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { ReservationDatabase } from "../../../features/persistence/ReservationDatabase";
+import { ReservationDatabase } from "../../../../features/persistence/ReservationDatabase";
 
 export default async function handler(
   req: NextApiRequest,
