@@ -56,8 +56,8 @@ export class ReservationDatabase {
             'last_name', last_name,
             'birth_date', birth_date,
             'document_number', document_number,
-            'place_from', NULL,
-            'place_back', NULL
+            'place_from', place_from,
+            'place_back', place_back
           )
            FROM passengers
           WHERE booking_id = b.id
