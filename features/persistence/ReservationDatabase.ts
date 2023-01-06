@@ -50,14 +50,16 @@ export class ReservationDatabase {
                 'availability', (SELECT COUNT(*) FROM passengers WHERE booking_id = b.id) - (SELECT COUNT(*) from bookings b RIGHT JOIN passengers p ON b.id = p.booking_id = 0)
             )
         ) as flights, 
-        (SELECT JSON_OBJECT(
-            'id', id,
-            'first_name', first_name,
-            'last_name', last_name,
-            'birth_date', birth_date,
-            'document_number', document_number,
-            'place_from', place_from,
-            'place_back', place_back
+        ( SELECT JSON_ARRAYAGG(
+            JSON_OBJECT(
+                'id', id,
+                'first_name', first_name,
+                'last_name', last_name,
+                'birth_date', birth_date,
+                'document_number', document_number,
+                'place_from', place_from,
+                'place_back', place_back
+            )
           )
            FROM passengers
           WHERE booking_id = b.id
@@ -108,7 +110,7 @@ export class ReservationDatabase {
             })
           );
 
-          results[0].passengers = [results[0].passengers].map(
+          results[0].passengers = results[0].passengers.map(
             (passenger: {
               id: number;
               first_name: string;
