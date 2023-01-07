@@ -11,8 +11,6 @@ import {
 const BIRTH_DATE_REGEXP_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
 const DOCUMENT_REGEXP_FORMAT = /^\d{10}$/;
 
-createConnection.connect();
-
 const writeErrorsFromFlightIfTheyExistAndReturnTrueIfTheyDoExist = (
   flight: { id?: number; date?: string },
   errors: string[]
@@ -34,8 +32,10 @@ const isFlightAvailable = async (
   flight: { id: number; date: string },
   passengers: any[]
 ) => {
+  const connection = createConnection();
+
   const availableFlights: any[] = await new Promise((resolve, reject) => {
-    createConnection.query(
+    connection.query(
       `SELECT flights.id 
          FROM flights 
    INNER JOIN bookings
@@ -61,6 +61,8 @@ const isFlightAvailable = async (
           return reject(error);
         }
 
+        connection.end();
+
         resolve(results);
       }
     );
@@ -70,8 +72,9 @@ const isFlightAvailable = async (
 };
 
 const doesFlightExist = async (id: number) => {
+  const connection = createConnection();
   const foundFlights: any[] = await new Promise((resolve, reject) => {
-    createConnection.query(
+    connection.query(
       `SELECT id
          FROM flights 
         WHERE id=?
@@ -81,6 +84,8 @@ const doesFlightExist = async (id: number) => {
         if (error) {
           return reject(error);
         }
+
+        connection.end();
 
         resolve(results);
       }
@@ -182,13 +187,13 @@ export default async function handler(
       errors.passengers.push(ValidationErrors.cannotBeEmptyArray("passengers"));
     }
 
-    if (passengers.length === 0) {
+    if (passengers?.length === 0) {
       errors.passengers.push(
         ValidationErrors.shouldBePositiveInteger("passengers")
       );
     } else {
       if (
-        passengers.some(
+        passengers?.some(
           (passenger: { first_name: string }) => !passenger.first_name
         )
       ) {
@@ -196,7 +201,7 @@ export default async function handler(
       }
 
       if (
-        passengers.some(
+        passengers?.some(
           (passenger: { last_name: string }) => !passenger.last_name
         )
       ) {
@@ -204,7 +209,7 @@ export default async function handler(
       }
 
       if (
-        passengers.some(
+        passengers?.some(
           (passenger: { birth_date: string }) => !passenger.birth_date
         )
       ) {
@@ -216,7 +221,7 @@ export default async function handler(
       }
 
       if (
-        passengers.some(
+        passengers?.some(
           (passenger: { document_number: string }) => !passenger.document_number
         )
       ) {
@@ -255,14 +260,14 @@ export default async function handler(
   }
 }
 function areSomeBirthDatesIncorrect(passengers: any) {
-  return passengers.some(
+  return passengers?.some(
     (passenger: { birth_date: string }) =>
       !BIRTH_DATE_REGEXP_FORMAT.test(passenger.birth_date)
   );
 }
 
 function areSomeDocumentsFormatIncorect(passengers: any) {
-  return passengers.some(
+  return passengers?.some(
     (passenger: { document_number: string }) =>
       !DOCUMENT_REGEXP_FORMAT.test(passenger.document_number)
   );
