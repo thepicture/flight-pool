@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { connection } from "../../features/persistence/db";
+import { createConnection } from "../../features/persistence/db";
 
 import {
   ErrorsContainer,
@@ -11,7 +11,7 @@ import {
 const BIRTH_DATE_REGEXP_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
 const DOCUMENT_REGEXP_FORMAT = /^\d{10}$/;
 
-connection.connect();
+createConnection.connect();
 
 const writeErrorsFromFlightIfTheyExistAndReturnTrueIfTheyDoExist = (
   flight: { id?: number; date?: string },
@@ -35,7 +35,7 @@ const isFlightAvailable = async (
   passengers: any[]
 ) => {
   const availableFlights: any[] = await new Promise((resolve, reject) => {
-    connection.query(
+    createConnection.query(
       `SELECT flights.id 
          FROM flights 
    INNER JOIN bookings
@@ -71,7 +71,7 @@ const isFlightAvailable = async (
 
 const doesFlightExist = async (id: number) => {
   const foundFlights: any[] = await new Promise((resolve, reject) => {
-    connection.query(
+    createConnection.query(
       `SELECT id
          FROM flights 
         WHERE id=?
@@ -138,9 +138,7 @@ export default async function handler(
         )
       ) {
         if (!(await doesFlightExist(flight_from.id))) {
-          errors.flight_from.push(
-            ValidationErrors.flightDoesNotExist("flight_from")
-          );
+          errors.flight_from.push(ValidationErrors.doesNotExist("flight_from"));
         } else if (
           !(await isFlightAvailable(
             flight_from,
@@ -164,9 +162,7 @@ export default async function handler(
         )
       ) {
         if (!(await doesFlightExist(flight_back.id))) {
-          errors.flight_back.push(
-            ValidationErrors.flightDoesNotExist("flight_back")
-          );
+          errors.flight_back.push(ValidationErrors.doesNotExist("flight_back"));
         } else if (
           !(await isFlightAvailable(
             flight_back,

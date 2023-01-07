@@ -1,11 +1,9 @@
-import { connection } from "../../features/persistence/db";
+import { createConnection } from "../../features/persistence/db";
 
 export class ReservationDatabase {
-  constructor() {
-    connection.connect();
-  }
-
   async getReservationByCode(code: string): Promise<any[]> {
+    const connection = createConnection();
+
     return await new Promise((resolve, reject) => {
       connection.query(
         `SELECT code, (f1.cost + f2.cost) as cost, JSON_ARRAY(
@@ -130,13 +128,10 @@ export class ReservationDatabase {
             })
           );
 
+          connection.end();
           return resolve(results[0]);
         }
       );
     });
-  }
-
-  dispose() {
-    connection.end((err) => console.error(err));
   }
 }

@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { connection } from "../../features/persistence/db";
-connection.connect();
+import { createConnection } from "../../features/persistence/db";
+createConnection.connect();
 
 export default async function handler(
   req: NextApiRequest,
@@ -13,7 +13,7 @@ export default async function handler(
     } = req;
 
     const results = await new Promise((resolve, reject) => {
-      connection.query(
+      createConnection.query(
         `SELECT name, iata 
            FROM airports 
           WHERE city LIKE ?

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { connection } from "../../features/persistence/db";
+import { createConnection } from "../../features/persistence/db";
 
 import {
   ErrorsContainer,
@@ -8,13 +8,13 @@ import {
   Validator,
 } from "../../features/validator";
 
-connection.connect();
-
 const DATE_REGEXP = /[0-9]{4}-[0-9]{2}-[0-9]{2}/;
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<string>
 ) {
+  res.setHeader("Content-Type", "application/json");
+
   try {
     const errors: ErrorsContainer = {
       from: [],
@@ -60,6 +60,8 @@ export default async function handler(
       );
     }
 
+    const connection = createConnection();
+
     const flightsTo = await new Promise((resolve, reject) => {
       connection.query(
         buildFlightsQuery(departureDate, Number(passengers)),
@@ -100,7 +102,7 @@ export default async function handler(
         })
       : [];
 
-    res.setHeader("Content-Type", "application/json");
+    connection.end();
 
     if (Validator.hasErrors(errors)) {
       return res
