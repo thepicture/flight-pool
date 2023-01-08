@@ -1,42 +1,28 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { createConnection } from "../../features/persistence/db";
-createConnection.connect();
+import { AirportDatabase } from "../../features/persistence/airports/AirportDatabase";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<string>
 ) {
+  res.setHeader("Content-Type", "application/json");
+
+  const { query } = req.query;
+
   try {
-    const {
-      query: { query },
-    } = req;
+    if (typeof query !== "string") {
+      throw new Error("query should be presented");
+    }
 
-    const results = await new Promise((resolve, reject) => {
-      createConnection.query(
-        `SELECT name, iata 
-           FROM airports 
-          WHERE city LIKE ?
-             OR name LIKE ? 
-             OR iata = ? 
-          LIMIT 64`,
-        [`%${query}%`, `%${query}%`, query],
-        function (error, results) {
-          if (error) {
-            reject(error);
-          }
+    const database = new AirportDatabase();
 
-          resolve(results);
-        }
-      );
-    });
-
-    res.setHeader("Content-Type", "application/json");
+    const airports = await database.getAirportsByQuery(query);
 
     return res.status(200).end(
       JSON.stringify({
         data: {
-          items: results,
+          items: airports,
         },
       })
     );
