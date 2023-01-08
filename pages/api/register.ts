@@ -14,43 +14,43 @@ export default function handler(
   res: NextApiResponse<string>
 ) {
   const errors: ErrorsContainer = {
-    firstName: [],
-    lastName: [],
+    first_name: [],
+    last_name: [],
     phone: [],
-    documentNumber: [],
+    document_number: [],
     password: [],
   };
 
-  const { body } = req;
+  const { first_name, last_name, phone, document_number, password } = req.body;
 
-  if (!body.firstName) {
-    errors.firstName.push(ValidationErrors.cannotBeBlank("firstName"));
+  if (!first_name) {
+    errors["first_name"].push(ValidationErrors.cannotBeBlank("first_name"));
   }
 
-  if (!body.lastName) {
-    errors.lastName.push(ValidationErrors.cannotBeBlank("lastName"));
+  if (!last_name) {
+    errors["last_name"].push(ValidationErrors.cannotBeBlank("last_name"));
   }
 
-  if (!body.phone) {
+  if (!phone) {
     errors.phone.push(ValidationErrors.cannotBeBlank("phone"));
   }
 
-  if (!body.documentNumber) {
-    errors.documentNumber.push(
-      ValidationErrors.cannotBeBlank("documentNumber")
+  if (!document_number) {
+    errors["document_number"].push(
+      ValidationErrors.cannotBeBlank("document_number")
     );
   }
 
-  if (!DOCUMENT_NUMBER_REGEXP.test(body.documentNumber)) {
-    errors.documentNumber.push(
+  if (!DOCUMENT_NUMBER_REGEXP.test(document_number)) {
+    errors["document_number"].push(
       ValidationErrors.nDigitsAndCanStartWithZero(
-        "documentNumber",
+        "document_number",
         DOCUMENT_DIGIT_COUNT
       )
     );
   }
 
-  if (!body.password) {
+  if (!password) {
     errors.password.push(ValidationErrors.cannotBeBlank("password"));
   }
 
