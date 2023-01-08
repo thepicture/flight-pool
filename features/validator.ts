@@ -12,7 +12,7 @@ export const Validator = {
       error: {
         code,
         message,
-        errors,
+        errors: Validator._getFilledErrorArrays(errors),
       },
     }),
   hasErrors: (errors: ErrorsContainer) => {
@@ -23,6 +23,16 @@ export const Validator = {
     }
 
     return false;
+  },
+  _getFilledErrorArrays: (errors: ErrorsContainer) => {
+    const filteredErrors: { [key: string]: string[] } = {};
+    for (const error in errors) {
+      if (errors[error].length > 0) {
+        filteredErrors[error] = errors[error];
+      }
+    }
+
+    return filteredErrors;
   },
 };
 
