@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { createConnection } from "../../features/persistence/db";
+import { FlightDatabase } from "../../features/persistence/flights/FlightDatabase";
 
 import {
   ErrorsContainer,
@@ -9,6 +9,7 @@ import {
 } from "../../features/validator";
 
 const DATE_REGEXP = /[0-9]{4}-[0-9]{2}-[0-9]{2}/;
+
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<string>
@@ -60,50 +61,6 @@ export default async function handler(
       );
     }
 
-    const connection = createConnection();
-
-    const flightsTo = await new Promise((resolve, reject) => {
-      connection.query(
-        buildFlightsQuery(departureDate, Number(passengers)),
-        [from, passengers],
-        function (error, results) {
-          if (error) {
-            return reject(error);
-          }
-
-          results.forEach((result: { from: string; to: string }) => {
-            result.from = JSON.parse(result.from);
-            result.to = JSON.parse(result.to);
-          });
-
-          resolve(results);
-        }
-      );
-    });
-
-    const flightsBack = arrivalDate
-      ? await new Promise((resolve, reject) => {
-          connection.query(
-            buildFlightsQuery(departureDate, Number(passengers)),
-            [to, passengers],
-            function (error, results) {
-              if (error) {
-                reject(error);
-              }
-
-              results.forEach((result: { from: string; to: string }) => {
-                result.from = JSON.parse(result.from);
-                result.to = JSON.parse(result.to);
-              });
-
-              resolve(results);
-            }
-          );
-        })
-      : [];
-
-    connection.end();
-
     if (Validator.hasErrors(errors)) {
       return res
         .status(422)
@@ -115,6 +72,46 @@ export default async function handler(
           )
         );
     } else {
+      if (
+        typeof from !== "string" ||
+        typeof to !== "string" ||
+        typeof departureDate !== "string" ||
+        (arrivalDate && typeof arrivalDate !== "string") ||
+        typeof passengers !== "string"
+      ) {
+        throw new Error(
+          "query params should be either string or not presented"
+        );
+      }
+
+      const passengerCount = Number(passengers);
+
+      if (![1, 2, 3, 4, 5, 6, 7, 8].includes(passengerCount)) {
+        throw new Error(
+          "passenger count should be an integer in closed interval 1-8"
+        );
+      }
+
+      const database = new FlightDatabase();
+
+      const flightsTo = await database.getFlightsByParams({
+        from,
+        to,
+        date1: departureDate,
+        date2: arrivalDate,
+        passengers: passengerCount,
+      });
+
+      const flightsBack = arrivalDate
+        ? await database.getFlightsByParams({
+            from,
+            to,
+            date2: arrivalDate,
+            date1: departureDate,
+            passengers: passengerCount,
+          })
+        : [];
+
       return res.status(200).end(
         JSON.stringify({
           data: {
@@ -128,60 +125,4 @@ export default async function handler(
     console.error(error);
     return res.status(500).end();
   }
-}
-function buildFlightsQuery(
-  departureDate: string | string[] | undefined,
-  passengerCount: number
-) {
-  return `    SELECT f.id as flight_id, 
-                    flight_code, 
-                    JSON_OBJECT(
-                      'city', a_departure.city,
-                      'airport', a_departure.name,
-                      'iata', a_departure.iata,
-                      'date', '${departureDate}',
-                      'time', DATE_FORMAT(f.time_from, '%h:%i')
-                    ) as 'from',
-                    JSON_OBJECT(
-                      'city', a_arrival.city,
-                      'airport', a_arrival.name,
-                      'iata', a_arrival.iata,
-                      'date', '${departureDate}',
-                      'time', DATE_FORMAT(f.time_to, '%h:%i')
-                    ) as 'to',
-                    f.cost,
-                    (
-                      (SELECT COUNT(*) 
-                         FROM bookings 
-                        WHERE flight_from = f.id
-                      ) - (
-                          SELECT COUNT(*) 
-                            FROM bookings 
-                           WHERE flight_from = f.id
-                             AND (SELECT COUNT(*) FROM passengers WHERE booking_id = id) > ${passengerCount}
-                             AND DATE_FORMAT(date_from, '%y-%M-%d') = '${departureDate}'
-                          )
-                    ) as availability
-               FROM flights f
-         INNER JOIN airports a_departure
-                 ON f.from_id = a_departure.id
-         INNER JOIN airports a_arrival
-                 ON f.to_id = a_arrival.id
-         INNER JOIN bookings b
-                 ON b.flight_from = f.id
-         INNER JOIN passengers p
-                 ON p.booking_id = b.id
-              WHERE (
-                (SELECT COUNT(*) 
-                   FROM bookings 
-                  WHERE flight_from = f.id
-                ) - (
-                    SELECT COUNT(*) 
-                      FROM bookings 
-                     WHERE flight_from = f.id
-                       AND (SELECT COUNT(*) FROM passengers WHERE booking_id = id) > 0
-                       AND DATE_FORMAT(date_from, '%y-%M-%d') = '${departureDate}'
-                    )
-              ) >= ${passengerCount}
-              LIMIT 64`;
 }
