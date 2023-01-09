@@ -16,22 +16,26 @@ export class FlightDatabase {
 
     const airports: any[] = await new Promise((resolve, reject) => {
       connection.query(
-        `    SELECT DISTINCT f.id as flight_id, 
+        `    SELECT f.id as flight_id, 
                     flight_code, 
-                    JSON_OBJECT(
-                      'city', a_arrival.city,
-                      'airport', a_arrival.name,
-                      'iata', a_arrival.iata,
-                      'date', ?,
-                      'time', DATE_FORMAT(f.time_from, '%h:%i')
-                    ) as 'from',
-                    JSON_OBJECT(
-                      'city', a_departure.city,
-                      'airport', a_departure.name,
-                      'iata', a_departure.iata,
-                      'date', ?,
-                      'time', DATE_FORMAT(f.time_to, '%h:%i')
-                    ) as 'to',
+                    JSON_ARRAYAGG(
+                      JSON_OBJECT(
+                        'from', JSON_OBJECT(
+                          'city', a_arrival.city,
+                          'airport', a_arrival.name,
+                          'iata', a_arrival.iata,
+                          'date', ?,
+                          'time', DATE_FORMAT(f.time_from, '%h:%i')
+                        ),
+                        'to', JSON_OBJECT(
+                          'city', a_departure.city,
+                          'airport', a_departure.name,
+                          'iata', a_departure.iata,
+                          'date', ?,
+                          'time', DATE_FORMAT(f.time_to, '%h:%i')
+                        )
+                      )  
+                    ) as flights,
                     f.cost,
                     (
                       (SELECT COUNT(*) 
@@ -68,7 +72,8 @@ export class FlightDatabase {
               ) >= ?
               AND a_arrival.iata LIKE ?
               AND a_departure.iata LIKE ?
-              LIMIT 64`,
+              GROUP BY f.id
+            LIMIT 64`,
         [
           date1,
           date2,
@@ -81,13 +86,36 @@ export class FlightDatabase {
         ],
         (error, results) => {
           if (error) {
-            reject(error);
+            return reject(error);
           }
 
-          results.forEach((result: { from: string; to: string }) => {
-            result.from = JSON.parse(result.from);
-            result.to = JSON.parse(result.to);
-          });
+          if (results.length === 0) {
+            return resolve([]);
+          }
+
+          results[0].flights = (JSON.parse(results[0].flights) as any[])
+            .filter(
+              (entry, index, array) =>
+                array
+                  .map((entry) => JSON.stringify(entry))
+                  .indexOf(JSON.stringify(entry)) === index
+            )
+            .map(({ from, to }) => ({
+              from: {
+                city: from.city,
+                date: from.date,
+                iata: from.iata,
+                time: from.time,
+                airport: from.airport,
+              },
+              to: {
+                city: to.city,
+                date: to.date,
+                iata: to.iata,
+                time: to.time,
+                airport: to.airport,
+              },
+            }));
 
           resolve(results);
         }
