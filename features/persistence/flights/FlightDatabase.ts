@@ -130,34 +130,29 @@ export class FlightDatabase {
   async isFlightAvailable(
     flight: { id: number; date: string },
     passengers: any[]
-  ) {
+  ): Promise<boolean> {
     const connection = createConnection();
 
     const availableFlights: any[] = await new Promise((resolve, reject) => {
       connection.query(
-        `SELECT flights.id 
-           FROM flights 
-     INNER JOIN bookings
-             ON flights.id = bookings.flight_from
-          WHERE flights.id = ?
-            AND bookings.date_from = ?
-            AND (
-              SELECT COUNT(*) 
-                      FROM bookings b
-                INNER JOIN flights f
-                        ON b.flight_from = f.id
-            ) - (
-              SELECT COUNT(*) 
-                      FROM bookings b
-                INNER JOIN flights f
-                        ON b.flight_from = f.id
-                     WHERE (SELECT COUNT(*) FROM bookings WHERE flight_from = f.id) > 0
-            ) >= ?
+        `SELECT f.id 
+           FROM bookings b
+           JOIN flights f
+             ON b.flight_from = f.id
+      LEFT JOIN passengers p
+             ON p.booking_id = b.id
+          WHERE p.id IS NULL
+            AND f.id = ?
+            AND b.date_from = ?
           LIMIT 1`,
-        [flight.id, flight.date, passengers.length],
+        [flight.id, flight.date],
         function (error, results) {
           if (error) {
             return reject(error);
+          }
+
+          if (results.length < passengers.length) {
+            false;
           }
 
           connection.end();
