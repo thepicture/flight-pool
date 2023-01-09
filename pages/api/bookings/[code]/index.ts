@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { ReservationDatabase } from "../../../../features/persistence/ReservationDatabase";
+import { BookingDatabase } from "../../../../features/persistence/BookingDatabase";
 
 export default async function handler(
   req: NextApiRequest,
@@ -25,8 +25,8 @@ export default async function handler(
   }
 
   try {
-    const database = new ReservationDatabase();
-    const reservations = await database.getReservationByCode(code);
+    const database = new BookingDatabase();
+    const reservations = await database.getBookingByCode(code);
 
     return res.status(201).end(
       JSON.stringify({

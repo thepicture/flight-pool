@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { ReservationDatabase } from "../../../features/persistence/ReservationDatabase";
+import { BookingDatabase } from "../../../features/persistence/BookingDatabase";
 import { UserDatabase } from "../../../features/persistence/users/UserDatabase";
 
 export default async function handler(
@@ -28,7 +28,7 @@ export default async function handler(
   }
 
   try {
-    const database = new ReservationDatabase();
+    const database = new BookingDatabase();
 
     const documentNumber = getDocumentNumberFromRequest(req);
 

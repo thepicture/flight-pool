@@ -1,7 +1,11 @@
-import { createConnection } from "../../features/persistence/db";
+import { createConnection } from "./db";
 
-export class ReservationDatabase {
-  async getReservationByCode(code: string): Promise<any[]> {
+import { StringGenerator } from "../generators/StringGenerator";
+
+const MAX_SAFE_COUNT_OF_CODES = (122 - 97 + 1) ** 5;
+
+export class BookingDatabase {
+  async getBookingByCode(code: string): Promise<any[]> {
     const connection = createConnection();
 
     return await new Promise((resolve, reject) => {
@@ -223,6 +227,45 @@ export class ReservationDatabase {
 
           connection.end();
           resolve(results);
+        }
+      );
+    });
+  }
+
+  async getUniqueBookingCodeOrThrowIfLimitReached() {
+    const connection = createConnection();
+
+    return await new Promise((resolve, reject) => {
+      connection.query(
+        `SELECT code FROM bookings`,
+        [],
+        (err, results: any[]) => {
+          if (err) {
+            return reject(err);
+          }
+
+          if (results.length > MAX_SAFE_COUNT_OF_CODES) {
+            throw new Error(
+              `no more codes available, 
+               should check bookings in the database 
+               and remove old entries 
+               or allow codes to be greater 
+               than 5 digit long`
+            );
+          }
+
+          let bookingCode;
+
+          while (true) {
+            bookingCode = StringGenerator.generate(5).toUpperCase();
+            if (!results.includes(bookingCode)) {
+              break;
+            }
+          }
+
+          connection.end();
+
+          return resolve(bookingCode);
         }
       );
     });

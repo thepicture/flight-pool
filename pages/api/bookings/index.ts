@@ -1,12 +1,14 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { createConnection } from "../../features/persistence/db";
+import { FlightDatabase } from "../../../features/persistence/flights/FlightDatabase";
+
+import { BookingDatabase } from "../../../features/persistence/BookingDatabase";
 
 import {
   ErrorsContainer,
   ValidationErrors,
   Validator,
-} from "../../features/validator";
+} from "../../../features/validator";
 
 const BIRTH_DATE_REGEXP_FORMAT = /^\d{4}-\d{2}-\d{2}$/;
 const DOCUMENT_REGEXP_FORMAT = /^\d{10}$/;
@@ -27,82 +29,6 @@ const writeErrorsFromFlightIfTheyExistAndReturnTrueIfTheyDoExist = (
 
   return errors.length > 0;
 };
-
-const isFlightAvailable = async (
-  flight: { id: number; date: string },
-  passengers: any[]
-) => {
-  const connection = createConnection();
-
-  const availableFlights: any[] = await new Promise((resolve, reject) => {
-    connection.query(
-      `SELECT flights.id 
-         FROM flights 
-   INNER JOIN bookings
-           ON flights.id = bookings.flight_from
-        WHERE flights.id = ?
-          AND bookings.date_from = ?
-          AND (
-            SELECT COUNT(*) 
-                    FROM bookings b
-              INNER JOIN flights f
-                      ON b.flight_from = f.id
-          ) - (
-            SELECT COUNT(*) 
-                    FROM bookings b
-              INNER JOIN flights f
-                      ON b.flight_from = f.id
-                   WHERE (SELECT COUNT(*) FROM bookings WHERE flight_from = f.id) > 0
-          ) >= ?
-        LIMIT 1`,
-      [flight.id, flight.date, passengers.length],
-      function (error, results) {
-        if (error) {
-          return reject(error);
-        }
-
-        connection.end();
-
-        resolve(results);
-      }
-    );
-  });
-
-  return availableFlights.length > 0;
-};
-
-const doesFlightExist = async (id: number) => {
-  const connection = createConnection();
-  const foundFlights: any[] = await new Promise((resolve, reject) => {
-    connection.query(
-      `SELECT id
-         FROM flights 
-        WHERE id=?
-        LIMIT 1`,
-      [id],
-      function (error, results) {
-        if (error) {
-          return reject(error);
-        }
-
-        connection.end();
-
-        resolve(results);
-      }
-    );
-  });
-
-  return foundFlights.length > 0;
-};
-
-const generateRandomCodeOfLength = (length: number): string =>
-  new Array(length)
-    .fill(null)
-    .map(() =>
-      String.fromCharCode(Math.floor(Math.random() * (122 - 97 + 1) + 97))
-    )
-    .join("")
-    .toUpperCase();
 
 export default async function handler(
   req: NextApiRequest,
@@ -133,6 +59,8 @@ export default async function handler(
 
     const { flight_from, flight_back, passengers } = req.body;
 
+    const flightDatabase = new FlightDatabase();
+
     if (!flight_from) {
       errors.flight_from.push(ValidationErrors.cannotBeBlank("flight_from"));
     } else {
@@ -142,10 +70,10 @@ export default async function handler(
           errors.flight_from
         )
       ) {
-        if (!(await doesFlightExist(flight_from.id))) {
+        if (!(await flightDatabase.doesFlightExist(flight_from.id))) {
           errors.flight_from.push(ValidationErrors.doesNotExist("flight_from"));
         } else if (
-          !(await isFlightAvailable(
+          !(await flightDatabase.isFlightAvailable(
             flight_from,
             passengers || Number.MAX_SAFE_INTEGER
           ))
@@ -166,10 +94,10 @@ export default async function handler(
           errors.flight_back
         )
       ) {
-        if (!(await doesFlightExist(flight_back.id))) {
+        if (!(await flightDatabase.doesFlightExist(flight_back.id))) {
           errors.flight_back.push(ValidationErrors.doesNotExist("flight_back"));
         } else if (
-          !(await isFlightAvailable(
+          !(await flightDatabase.isFlightAvailable(
             flight_back,
             passengers || Number.MAX_SAFE_INTEGER
           ))
@@ -228,7 +156,7 @@ export default async function handler(
         errors.passengers.push(
           ValidationErrors.cannotBeBlank("document_number")
         );
-      } else if (areSomeDocumentsFormatIncorect(passengers)) {
+      } else if (areSomeDocumentFormatsIncorect(passengers)) {
         errors.passengers.push(
           ValidationErrors.shouldBeOfDocumentFormat("document_number")
         );
@@ -246,10 +174,12 @@ export default async function handler(
           )
         );
     } else {
+      const bookingDatabase = new BookingDatabase();
+
       return res.status(201).end(
         JSON.stringify({
           data: {
-            code: generateRandomCodeOfLength(5),
+            code: await bookingDatabase.getUniqueBookingCodeOrThrowIfLimitReached(),
           },
         })
       );
@@ -266,7 +196,7 @@ function areSomeBirthDatesIncorrect(passengers: any) {
   );
 }
 
-function areSomeDocumentsFormatIncorect(passengers: any) {
+function areSomeDocumentFormatsIncorect(passengers: any) {
   return passengers?.some(
     (passenger: { document_number: string }) =>
       !DOCUMENT_REGEXP_FORMAT.test(passenger.document_number)

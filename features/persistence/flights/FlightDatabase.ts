@@ -126,4 +126,71 @@ export class FlightDatabase {
 
     return airports;
   }
+
+  async isFlightAvailable(
+    flight: { id: number; date: string },
+    passengers: any[]
+  ) {
+    const connection = createConnection();
+
+    const availableFlights: any[] = await new Promise((resolve, reject) => {
+      connection.query(
+        `SELECT flights.id 
+           FROM flights 
+     INNER JOIN bookings
+             ON flights.id = bookings.flight_from
+          WHERE flights.id = ?
+            AND bookings.date_from = ?
+            AND (
+              SELECT COUNT(*) 
+                      FROM bookings b
+                INNER JOIN flights f
+                        ON b.flight_from = f.id
+            ) - (
+              SELECT COUNT(*) 
+                      FROM bookings b
+                INNER JOIN flights f
+                        ON b.flight_from = f.id
+                     WHERE (SELECT COUNT(*) FROM bookings WHERE flight_from = f.id) > 0
+            ) >= ?
+          LIMIT 1`,
+        [flight.id, flight.date, passengers.length],
+        function (error, results) {
+          if (error) {
+            return reject(error);
+          }
+
+          connection.end();
+
+          resolve(results);
+        }
+      );
+    });
+
+    return availableFlights.length > 0;
+  }
+
+  async doesFlightExist(id: number) {
+    const connection = createConnection();
+    const foundFlights: any[] = await new Promise((resolve, reject) => {
+      connection.query(
+        `SELECT id
+           FROM flights 
+          WHERE id=?
+          LIMIT 1`,
+        [id],
+        function (error, results) {
+          if (error) {
+            return reject(error);
+          }
+
+          connection.end();
+
+          resolve(results);
+        }
+      );
+    });
+
+    return foundFlights.length > 0;
+  }
 }

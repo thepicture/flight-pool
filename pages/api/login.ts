@@ -40,7 +40,7 @@ export default function handler(
           errors
         )
       );
-  } else if (!areCorrectCredentials(body)) {
+  } else if (!areCredentialsCorrect(body)) {
     errors.phone.push(ValidationErrors.credentialsIncorrect);
     return res
       .status(401)
@@ -61,7 +61,7 @@ export default function handler(
     );
   }
 }
-export const areCorrectCredentials = ({
+export const areCredentialsCorrect = ({
   phone,
   password,
 }: {
@@ -69,4 +69,5 @@ export const areCorrectCredentials = ({
   password: string;
 }) =>
   phone === TEST_CREDENTIALS.phone && password === TEST_CREDENTIALS.password;
+
 export const getToken = () => Math.random().toString(36).split(".")[1];
