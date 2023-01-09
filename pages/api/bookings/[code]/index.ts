@@ -28,7 +28,7 @@ export default async function handler(
     const database = new BookingDatabase();
     const reservations = await database.getBookingByCode(code);
 
-    return res.status(201).end(
+    return res.status(200).end(
       JSON.stringify({
         data: {
           ...reservations,
